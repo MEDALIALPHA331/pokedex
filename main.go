@@ -1,6 +1,12 @@
 package main
 
-import "fmt"
+import (
+	"bufio"
+	"fmt"
+	"log"
+	"os"
+	"strings"
+)
 
 type CliCommand struct {
 	Name        string
@@ -9,17 +15,28 @@ type CliCommand struct {
 }
 
 func commandHelp() error {
+	fmt.Printf("\nWelcome to the Pokedex!\nUsage:\n\n")
+	for _, value := range GetCommands() {
+		fmt.Printf("%s: %s\n", value.Name, value.Description)
+	}
 	return nil
 }
 
 func commandExit() error {
+	os.Exit(0)
 	return nil
 }
 
-func main() {
+func GetAllKeys(m map[string]CliCommand) []string {
+	keys := make([]string, 0, len(m))
+	for key := range m {
+		keys = append(keys, key)
+	}
+	return keys
+}
 
-	// create a map for available commands, every command is an instance of that struct
-	Commands := map[string]CliCommand{
+func GetCommands() map[string]CliCommand {
+	return map[string]CliCommand{
 		"help": {
 			Name:        "help",
 			Description: "Displays a help message",
@@ -31,12 +48,35 @@ func main() {
 			Callback:    commandExit,
 		},
 	}
+}
 
-	fmt.Printf("%+v", Commands)
+func main() {
+	scanner := bufio.NewScanner(os.Stdin)
 
-	// stdin
-	// inifite loop, break if the stdin has one of the commands name
-	// execute the callback of that command
+	for {
+		fmt.Print("Pokedex > ")
+		scanner.Scan()
 
-	println("Hello")
+		if err := scanner.Err(); err != nil {
+			log.Fatalf("Error reading input: %+v", err)
+		}
+
+		Commands := GetCommands()
+		command := strings.ToLower(scanner.Text())
+		words := strings.Fields(command)
+
+		if len(words) == 0 {
+			continue
+		}
+
+		cmd, ok := Commands[words[0]]
+
+		if ok {
+			cmd.Callback()
+		} else {
+			fmt.Printf("Command unrecognized, try one of those %v\n", GetAllKeys(Commands))
+		}
+
+	}
+
 }
