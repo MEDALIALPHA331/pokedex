@@ -4,9 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 )
+
+const POKE_API_URL = "https://pokeapi.co/api/v2"
 
 type CliCommand struct {
 	Name        string
@@ -24,6 +27,23 @@ func commandHelp() error {
 
 func commandExit() error {
 	os.Exit(0)
+	return nil
+}
+
+func commandMap() error {
+	res, err := http.Get(POKE_API_URL + "/location/")
+	if err != nil {
+		log.Fatalf("Error getting pokemons from api: %+v", err)
+	}
+
+	if res.Status == "200 OK" {
+		var body []byte
+		res.Body.Read(body)
+
+		//unmarshal
+		print()
+	}
+
 	return nil
 }
 
@@ -46,6 +66,11 @@ func GetCommands() map[string]CliCommand {
 			Name:        "exit",
 			Description: "Exit the Pokedex",
 			Callback:    commandExit,
+		},
+		"map": {
+			Name:        "map",
+			Description: "",
+			Callback:    commandMap,
 		},
 	}
 }
