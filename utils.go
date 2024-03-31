@@ -1,6 +1,8 @@
 package main
 
-import "strings"
+import (
+	"strings"
+)
 
 func GetAllKeys(m map[string]CliCommand) []string {
 	keys := make([]string, 0, len(m))
