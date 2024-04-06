@@ -17,8 +17,9 @@ type LocationAreas struct {
 	} `json:"results"`
 }
 
-const (
+var (
 	POKE_API_URL = "https://pokeapi.co/api/v2/location"
+	Client       = NewHttpClient()
 )
 
 type Config struct {
@@ -28,25 +29,29 @@ type Config struct {
 
 func NewConfig() Config {
 	return Config{
-		Next:     "https://pokeapi.co/api/v2/location",
+		Next:     POKE_API_URL,
 		Previous: "",
 	}
 }
 
-type httpClient struct {
-	client *http.Client
-}
-
-func NewHttpClient() *httpClient {
-	return &httpClient{
-		client: &http.Client{
-			Timeout: time.Minute,
-		},
+func NewHttpClient() *http.Client {
+	var Client = &http.Client{
+		Timeout: time.Minute,
 	}
+	return Client
 }
 
-func GetNextPokeLocations(config *Config) (*LocationAreas, error) {
-	result, err := http.Get(config.Next)
+func GetPokeLocations(config *Config, next bool) (*LocationAreas, error) {
+
+	URL := config.Next
+	//! this is not intended behavior
+	if !next && len(config.Previous) > 0 {
+		//TODO: add isValid function for these urls
+		URL = config.Previous
+	}
+
+	result, err := Client.Get(URL)
+
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +63,11 @@ func GetNextPokeLocations(config *Config) (*LocationAreas, error) {
 		return nil, err
 	}
 	var data LocationAreas
-	json.Unmarshal(body, &data)
+	err = json.Unmarshal(body, &data)
+
+	if err != nil {
+		return nil, err
+	}
 
 	config.Next = data.Next
 	config.Previous = data.Previous
